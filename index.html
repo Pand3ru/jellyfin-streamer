@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Add Stream to Jellyfyn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+    rel="stylesheet">
+  <style>
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      background-color: #333;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    input,
+    button {
+      margin: 10px;
+      padding: 10px;
+      font-size: 16px;
+      width: 90%;
+      max-width: 500px;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      padding: 8px;
+      margin-top: 5px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      width: 90%;
+      max-width: 500px;
+    }
+
+    .live-indicator {
+      height: 10px;
+      width: 10px;
+      background-color: red;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .currently-playing {
+      margin: 20px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Add your StreamURL and look it up on Jellyfyn!</h1>
+  </header>
+  <div class="container">
+    <div class="currently-playing">
+      <span class="live-indicator"></span> Currently Playing: <span id="current-playing-url">None</span>
+    </div>
+    <input id="input" placeholder="Enter Stream URL here...">
+    <button id="submit">Submit</button>
+    <button id="go-next">Go Next</button>
+    <button id="stop">Stop</button>
+    <ul id="list"></ul>
+  </div>
+  <script>
+    document.getElementById('submit').addEventListener('click', function () {
+      var streamUrl = document.getElementById('input').value;
+      fetch('/addstreamurl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({url: streamUrl})
+      }).then(response => {
+        if (response.ok) {
+          fetchList();
+        } else {
+          alert('Failed to add URL');
+        }
+      }).catch(error => {
+        console.error('Error:', error);
+      });
+    });
+
+    document.getElementById('go-next').addEventListener('click', function () {
+      fetch('/gonext', {
+        method: 'GET'
+      }).then(response => {
+        if (response.ok) {
+          fetchCurrentPlaying();
+          fetchList();
+        } else {
+          alert('Failed to perform Go Next operation');
+        }
+      }).catch(error => {
+        console.error('Error:', error);
+      });
+    });
+
+    document.getElementById('stop').addEventListener('click', function () {
+      fetch('/stop', {
+        method: 'GET'
+      }).then(response => {
+        if (response.ok) {
+          document.getElementById('current-playing-url').textContent = 'None';
+        } else {
+          alert('Failed to stop the stream');
+        }
+      }).catch(error => {
+        console.error('Error:', error);
+      });
+    });
+
+    function fetchList() {
+      fetch('/print')
+        .then(response => response.json())
+        .then(data => {
+          const list = document.getElementById('list');
+          list.innerHTML = '';
+          data.forEach((item, index) => {
+            let li = document.createElement('li');
+            li.textContent = `${index + 1}: ${item.url}, Reachable: ${item.reachable}`;
+            list.appendChild(li);
+          });
+        }).catch(error => {
+          console.error('Error fetching list:', error);
+        });
+    }
+
+    function fetchCurrentPlaying() {
+      fetch('/getCurrent')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('current-playing-url').textContent = data || 'None';
+        }).catch(error => {
+          console.error('Error fetching current playing:', error);
+        });
+    }
+
+    fetchList();
+    fetchCurrentPlaying();
+  </script>
+</body>
+
+</html>
