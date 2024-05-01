@@ -26,7 +26,7 @@ Here's what worked for me. Note that I wrote this so that'll work for my use cas
 
 First, clone this repository to your local machine:
 ```bash
-    git clone https://github.com/yourusername/yourrepository.git
+    git clone https://github.com/Pand3ru/jellyfin-streamer.git
     cd yourrepository
 ```
 ### Build the Application
